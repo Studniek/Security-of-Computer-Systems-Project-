@@ -13,8 +13,6 @@ class MainWindow:
         self.listenerPort = int(listenerPort)
         self.senderPort = int(senderPort)
 
-        self.senderSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.senderSocket.bind(('', self.senderPort))
         self.destIP = ""
         self.destPort = -1
 
@@ -67,7 +65,16 @@ class MainWindow:
         self.chatTextBox.insert(tk.INSERT, msg)
         self.chatTextBox.config(state=tk.DISABLED)
 
-        self.senderSocket.sendto(msg.encode(), (self.destIP, self.destPort))
+
+        senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("jestesmy w sendMessage")
+        print("send1",self.destIP)
+        print("send2",self.destPort)
+        
+        senderSocket.connect((self.destIP,self.destPort))
+        senderSocket.send(msg.encode())
+
+        senderSocket.close()
 
     def showMessage(self, msg):
         self.chatTextBox.config(state=tk.NORMAL)
@@ -80,23 +87,28 @@ class MainWindow:
         self.chatTextBox.config(state=tk.DISABLED)
 
     def listenFunction(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(('', self.listenerPort))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('127.0.0.1', self.listenerPort))
+        sock.listen()
+
 
         while True:
-            data, senderInfo = sock.recvfrom(128)
-            print("data",data)
-            print("senderInfo",senderInfo)
-            msg = data.decode()
-            if self.destPort == -1:
-                senderAddr, senderPort = senderInfo
-                print("senderAddr",senderAddr)
-                print("senderPort",senderPort)
-                self.destIP = senderAddr
-                self.destPort = int(msg.split(";")[0])
-                # port, message = msg.split(";")
-                # print("destIP", port)
-                # self.destIP = port
-                self.showMessage(msg.split(";")[1])
-            # print('\rpeer: {}\n> '.format(data.decode()), end='')
-            self.showMessage(msg)
+            conn, senderInfo = sock.accept()
+            print("Listener Function")
+            print("conn", conn)
+            print("senderInfo", senderInfo)
+
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    break
+                msg = data.decode()
+                #print(msg)
+                if self.destPort == -1:
+                    senderAddr, senderPort = senderInfo
+                    print("senderAddr",senderAddr)
+                    print("senderPort",senderPort)
+                    self.destIP = senderAddr
+                    self.destPort = int(msg.split(";")[0])
+                self.showMessage(msg)
+            conn.close()
