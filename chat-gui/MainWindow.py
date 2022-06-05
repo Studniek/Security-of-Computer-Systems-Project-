@@ -4,7 +4,7 @@ import tkinter as tk
 import threading
 import socket
 from tkinter import filedialog
-from keyExchange import KeyManager as km, GenerateKeyWindow as gkw
+from keyExchange import KeyManager as km
 
 
 class MainWindow:
@@ -50,7 +50,11 @@ class MainWindow:
 
         self.generateKeysButton = tk.Button(self.frame, text="Generate RSA Keys", padx=10, pady=5,
                                             fg="white", bg=WINDOWS_BG_COLOR,
-                                            command=lambda: gkw.GenerateKeyWindow(self))
+                                            command= self.keyManager.generateRSAKeys)
+
+        self.loadKeysButton = tk.Button(self.frame, text="Load RSA Keys", padx=10, pady=5,
+                                        fg="white", bg=WINDOWS_BG_COLOR,
+                                        command=self.keyManager.loadRSAKeys)
 
         self.createChatButton.pack()
         self.chatLabel.pack()
@@ -61,6 +65,7 @@ class MainWindow:
         self.clearChatButton.pack()
         self.addFileButton.pack()
         self.generateKeysButton.pack()
+        self.loadKeysButton.pack()
 
         self.root.mainloop()
 

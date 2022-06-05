@@ -5,11 +5,11 @@ import hashlib
 WINDOWS_BG_COLOR = "#263D42"
 
 
-class GenerateKeyWindow:
+class EnterLocalKeyWindow:
     def __init__(self, parent):
         self.parent = parent  # Parent is the MainWindow
         self.root = tk.Toplevel(parent.root)
-        self.root.title("Generate RSA keys")
+        self.root.title("Generate Local Key")
         self.root.geometry("300x150")
 
         # Password
@@ -41,12 +41,9 @@ class GenerateKeyWindow:
 
         if password != repeatPassword:
             tk.messagebox.showerror(title="Wrong password", message="Password doesn't match!")
-            return
 
         else:
             self.root.destroy()
             hashed_password = hashlib.sha256(password.encode('utf-8')).digest()
             print("Hashed password:" + str(hashed_password))
             self.parent.keyManager.localKeyHash = hashed_password
-            self.parent.keyManager.generateRSAKeys()
-            return
