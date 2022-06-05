@@ -1,11 +1,17 @@
 import CreateChatWindow as ccw
 from constants import *
 import tkinter as tk
+from tkinter.ttk import Progressbar
 import threading
 import socket
+import os
+from tqdm import tqdm
 from tkinter import filedialog
 from keyExchange import KeyManager as km
 
+
+SIZE = 1024
+FORMAT = "utf-8"
 
 class MainWindow:
     def __init__(self, listenerPort=5050, senderPort=5051, title="BSK: Secure p2p chat"):
@@ -68,12 +74,61 @@ class MainWindow:
         self.loadKeysButton.pack()
 
         self.root.mainloop()
-
+    
     def addFile(self):
-        filenames = filedialog.askopenfilenames(initialdir="/", title="Select File")
-        for filename in filenames:
-            # LOADING FILES TO MEMORY AND SENDING THEM TO ANOTHER USER HERE...
-            print(filename)
+        filenames = filedialog.askopenfilenames(initialdir="E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui", title="Select File")
+        filepath= filenames[0]
+        senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        senderSocket.connect((self.destIP,self.destPort))
+        # Sending name of the file with flag that it is a file
+        fileFlag = "file"
+        filename = filepath.split("/")[-1]
+        filesize = os.path.getsize(filepath)
+        fileInfo = f"{fileFlag}_{filename}_{filesize}"
+
+        print("fileInfo",fileInfo)
+
+        senderSocket.send(fileInfo.encode(FORMAT))
+        print("fileName",filename)
+
+        #Create progressBar
+        
+        pbWindow = tk.Tk()
+        pbWindow.title("ProgressBar")
+        pbWindow.geometry("500x500")
+
+        pb = Progressbar(
+            pbWindow,
+            orient = "horizontal",
+            length = 100,
+            mode = 'determinate'
+        )
+        pb.place(x=40, y=20)
+        txt = tk.Label(
+            pbWindow,
+            text = '0%',
+            bg = '#345',
+            fg = '#fff'
+        )
+        txt.place(x=150 ,y=20 )
+        tk.Button(
+            pbWindow,
+            text='Close',
+            command= lambda: pbWindow.destroy()
+        ).place(x=40, y=50)
+        #pbWindow.mainloop()
+        print("poszło dalej")
+        bar = tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=SIZE)
+        with open(filename, "rb") as f:
+            while True:
+                data = f.read(SIZE)
+                if not data:
+                    break
+                senderSocket.send(data)
+                bar.update(len(data))
+
+        # closing the connection
+        senderSocket.close()
 
     def sendMessage(self):
         msg = self.enterMessageTextBox.get("1.0", tk.END)
@@ -113,11 +168,29 @@ class MainWindow:
             print("senderInfo", senderInfo)
 
             while True:
-                data = conn.recv(1024)
+                data = conn.recv(200)
                 if not data:
                     break
-                msg = data.decode()
-                # print(msg)
+                msg = data.decode(FORMAT)
+                print(msg)
+                if msg.split("_")[0] == "file":
+                    print("msg2",msg)
+                    fileName = msg.split("_")[1]
+                    fileSize = msg.split("_")[2]
+
+                    # Progress BAR
+                    bar = Progressbar(self.root, orient='horizontal', length = 100, mode ='determinate')
+                    bar.pack(expand = True)
+
+                    with open(f"recv_{fileName}", "wb") as f:
+
+                        while True:
+                            data = conn.recv(SIZE)
+                            if not data:
+                                break
+                            f.write(data)  
+            
+                #print(msg)
                 if self.destPort == -1:
                     senderAddr, senderPort = senderInfo
                     print("senderAddr", senderAddr)
@@ -125,4 +198,5 @@ class MainWindow:
                     self.destIP = senderAddr
                     self.destPort = int(msg.split(";")[0])
                 self.showMessage(msg)
+
             conn.close()
