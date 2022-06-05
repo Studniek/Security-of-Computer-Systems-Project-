@@ -22,7 +22,6 @@ class KeyManager:
         enterLocalKeyWindow = elkw.EnterLocalKeyWindow(self.parent)
         enterLocalKeyWindow.root.wait_window()
 
-        print("LOLOLOL")
         print(self.localKeyHash)
         self.ownPublicKey, self.ownPrivateKey = rsa.newkeys(length)
 
