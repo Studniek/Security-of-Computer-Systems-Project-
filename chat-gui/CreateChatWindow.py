@@ -1,5 +1,5 @@
 import tkinter as tk
-import constants as consts
+from constants import *
 import socket
 
 
@@ -28,7 +28,7 @@ class CreateChatWindow:
         self.destPortEntry.insert(tk.END, '50001')
 
         self.submitButton = tk.Button(self.root, text="Submit", padx=10, pady=5,
-                                      fg="white", bg=consts.WINDOWS_BG_COLOR,
+                                      fg="white", bg=WINDOWS_BG_COLOR,
                                       command=self.startChat)
 
         self.cipherModeLabel.grid(row=0, column=0)

@@ -4,18 +4,24 @@ import tkinter as tk
 import threading
 import socket
 from tkinter import filedialog
+from keyExchange import KeyManager as km
 
 
 class MainWindow:
-    def __init__(self, listenerPort, senderPort, title):
+    def __init__(self, listenerPort=5050, senderPort=5051, title="BSK: Secure p2p chat"):
+
+        # NETWORK
         self.listener = threading.Thread(target=self.listenFunction, daemon=True)
         self.listener.start()
         self.listenerPort = int(listenerPort)
         self.senderPort = int(senderPort)
-
         self.destIP = ""
         self.destPort = -1
 
+        # KEYS
+        self.keyManager = km.KeyManager(self)
+
+        # GUI
         self.root = tk.Tk()
         self.root.title(title)
 
@@ -27,7 +33,7 @@ class MainWindow:
         self.frame.place(relwidth=0.8, relheight=0.8, relx=0.1, rely=0.1)
 
         self.chatLabel = tk.Label(self.frame, text="Chat window")
-        self.chatTextBox = tk.Text(self.frame, bg="light blue", width=80, height=25, state='disabled')
+        self.chatTextBox = tk.Text(self.frame, bg="light blue", width=80, height=20, state='disabled')
         self.createChatButton = tk.Button(self.root, text="Create Chat", padx=10, pady=5,
                                           fg="white", bg=WINDOWS_BG_COLOR,
                                           command=lambda: ccw.CreateChatWindow(self))
@@ -42,6 +48,14 @@ class MainWindow:
         self.addFileButton = tk.Button(self.frame, text="Add File", padx=10, pady=5,
                                        fg="white", bg=WINDOWS_BG_COLOR, command=self.addFile)
 
+        self.generateKeysButton = tk.Button(self.frame, text="Generate RSA Keys", padx=10, pady=5,
+                                            fg="white", bg=WINDOWS_BG_COLOR,
+                                            command= self.keyManager.generateRSAKeys)
+
+        self.loadKeysButton = tk.Button(self.frame, text="Load RSA Keys", padx=10, pady=5,
+                                        fg="white", bg=WINDOWS_BG_COLOR,
+                                        command=self.keyManager.loadRSAKeys)
+
         self.createChatButton.pack()
         self.chatLabel.pack()
         self.chatTextBox.pack()
@@ -50,6 +64,8 @@ class MainWindow:
         self.sendMessageButton.pack()
         self.clearChatButton.pack()
         self.addFileButton.pack()
+        self.generateKeysButton.pack()
+        self.loadKeysButton.pack()
 
         self.root.mainloop()
 
@@ -65,13 +81,12 @@ class MainWindow:
         self.chatTextBox.insert(tk.INSERT, msg)
         self.chatTextBox.config(state=tk.DISABLED)
 
-
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("jestesmy w sendMessage")
-        print("send1",self.destIP)
-        print("send2",self.destPort)
-        
-        senderSocket.connect((self.destIP,self.destPort))
+        print("send1", self.destIP)
+        print("send2", self.destPort)
+
+        senderSocket.connect((self.destIP, self.destPort))
         senderSocket.send(msg.encode())
 
         senderSocket.close()
@@ -91,7 +106,6 @@ class MainWindow:
         sock.bind(('127.0.0.1', self.listenerPort))
         sock.listen()
 
-
         while True:
             conn, senderInfo = sock.accept()
             print("Listener Function")
@@ -103,11 +117,11 @@ class MainWindow:
                 if not data:
                     break
                 msg = data.decode()
-                #print(msg)
+                # print(msg)
                 if self.destPort == -1:
                     senderAddr, senderPort = senderInfo
-                    print("senderAddr",senderAddr)
-                    print("senderPort",senderPort)
+                    print("senderAddr", senderAddr)
+                    print("senderPort", senderPort)
                     self.destIP = senderAddr
                     self.destPort = int(msg.split(";")[0])
                 self.showMessage(msg)
