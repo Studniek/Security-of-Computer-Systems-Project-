@@ -38,9 +38,10 @@ class NetworkManager:
              'message': msg, 'publicRSAKey': publicRSAKey})
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        senderSocket.connect(('127.0.0.1', self.parent.networkManager.destPort))
+        senderSocket.connect(('127.0.0.1', self.destPort))
         senderSocket.sendall(json_data.encode())
         senderSocket.close()
+        self.parent.showMessage(msg)
 
     def listenFunction(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

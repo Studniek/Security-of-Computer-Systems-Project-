@@ -53,7 +53,7 @@ class CreateChatWindow:
         self.parent.showMessage(msg)
 
         json_data = json.dumps(
-            {'messageType': MessageType.handshake.value, 'destinationPort': self.parent.networkManager.destPort,
+            {'messageType': MessageType.handshake.value, 'destinationPort': self.parent.networkManager.listenerPort,
              'message': msg, 'publicRSAKey': publicRSAKey})
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
