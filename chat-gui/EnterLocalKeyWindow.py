@@ -1,8 +1,6 @@
 import tkinter as tk
 import hashlib
-
-# from ..constants import *
-WINDOWS_BG_COLOR = "#263D42"
+from constants import *
 
 
 class EnterLocalKeyWindow:
@@ -45,5 +43,5 @@ class EnterLocalKeyWindow:
         else:
             self.root.destroy()
             hashed_password = hashlib.sha256(password.encode('utf-8')).digest()
-            print("Hashed password:" + str(hashed_password))
+            print("Hashed password:" + str(hashed_password)+"\n\n\n")
             self.parent.keyManager.localKeyHash = hashed_password

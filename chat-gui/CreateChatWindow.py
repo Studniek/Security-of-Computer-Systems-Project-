@@ -25,7 +25,7 @@ class CreateChatWindow:
         # Destination port
         self.destPortLabel = tk.Label(self.root, text="Enter destination port:")
         self.destPortEntry = tk.Entry(self.root)
-        self.destPortEntry.insert(tk.END, '50001')
+        self.destPortEntry.insert(tk.END, '50012')
 
         self.submitButton = tk.Button(self.root, text="Submit", padx=10, pady=5,
                                       fg="white", bg=WINDOWS_BG_COLOR,
@@ -44,13 +44,13 @@ class CreateChatWindow:
         print("IP Address:\t" + self.ipEntry.get())
         print("Destination port:\t" + self.destPortEntry.get())
 
-        self.parent.destIP = self.ipEntry.get()
-        self.parent.destPort = int(self.destPortEntry.get())
-        msg = f'{self.parent.listenerPort} ; Polaczenie zostalo utworzone!'
+        self.parent.networkManager.destIP = self.ipEntry.get()
+        self.parent.networkManager.destPort = int(self.destPortEntry.get())
+        msg = f'{self.parent.networkManager.listenerPort} ; Polaczenie zostalo utworzone!'
        
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        senderSocket.connect(('127.0.0.1', self.parent.destPort))
+        senderSocket.connect(('127.0.0.1', self.parent.networkManager.destPort))
         senderSocket.sendall(msg.encode())
         senderSocket.close()
 

@@ -1,6 +1,3 @@
-import rsa
-import os
-from tkinter import filedialog
 import threading
 import socket
 
@@ -14,6 +11,16 @@ class NetworkManager:
         self.senderPort = int(senderPort)
         self.destIP = ""
         self.destPort = -1
+
+    def sendMessage(self, msg):
+        senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print("jestesmy w sendMessage")
+        print("send1", self.destIP)
+        print("send2", self.destPort)
+
+        senderSocket.connect((self.destIP, self.destPort))
+        senderSocket.send(msg.encode())
+        senderSocket.close()
 
     def listenFunction(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
