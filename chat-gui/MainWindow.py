@@ -8,6 +8,7 @@ import os
 from tqdm import tqdm
 from tkinter import filedialog
 from keyExchange import KeyManager as km
+import cryptoFunctions as crypt
 
 
 SIZE = 1024
@@ -83,6 +84,14 @@ class MainWindow:
         # Sending name of the file with flag that it is a file
         fileFlag = "file"
         filename = filepath.split("/")[-1]
+
+        # encryption of the file 
+        key = crypt.get_random_bytes(16)
+        init_data = crypt.readBytes(filepath)
+        json_enc_data = crypt.ecbEncryption(init_data, key)
+        crypt.writeBytes(filename, bytes(json_enc_data, 'utf-8'))
+
+
         filesize = os.path.getsize(filepath)
         fileInfo = f"{fileFlag}_{filename}_{filesize}"
 
@@ -92,33 +101,33 @@ class MainWindow:
         print("fileName",filename)
 
         #Create progressBar
-        
-        pbWindow = tk.Tk()
-        pbWindow.title("ProgressBar")
-        pbWindow.geometry("500x500")
+        # pbWindow = tk.Tk()
+        # pbWindow.title("ProgressBar")
+        # pbWindow.geometry("500x500")
 
-        pb = Progressbar(
-            pbWindow,
-            orient = "horizontal",
-            length = 100,
-            mode = 'determinate'
-        )
-        pb.place(x=40, y=20)
-        txt = tk.Label(
-            pbWindow,
-            text = '0%',
-            bg = '#345',
-            fg = '#fff'
-        )
-        txt.place(x=150 ,y=20 )
-        tk.Button(
-            pbWindow,
-            text='Close',
-            command= lambda: pbWindow.destroy()
-        ).place(x=40, y=50)
-        #pbWindow.mainloop()
+        # pb = Progressbar(
+        #     pbWindow,
+        #     orient = "horizontal",
+        #     length = 100,
+        #     mode = 'determinate'
+        # )
+        # pb.place(x=40, y=20)
+        # txt = tk.Label(
+        #     pbWindow,
+        #     text = '0%',
+        #     bg = '#345',
+        #     fg = '#fff'
+        # )
+        # txt.place(x=150 ,y=20 )
+        # tk.Button(
+        #     pbWindow,
+        #     text='Close',
+        #     command= lambda: pbWindow.destroy()
+        # ).place(x=40, y=50)
+        # #pbWindow.mainloop()
         print("poszło dalej")
         bar = tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=SIZE)
+        #filename
         with open(filename, "rb") as f:
             while True:
                 data = f.read(SIZE)
