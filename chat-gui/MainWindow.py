@@ -5,18 +5,19 @@ import threading
 import socket
 from tkinter import filedialog
 from keyExchange import KeyManager as km
+from network import NetworkManager as nm
 
 
 class MainWindow:
-    def __init__(self, listenerPort=5050, senderPort=5051, title="BSK: Secure p2p chat"):
-
-        # NETWORK
-        self.listener = threading.Thread(target=self.listenFunction, daemon=True)
-        self.listener.start()
-        self.listenerPort = int(listenerPort)
-        self.senderPort = int(senderPort)
-        self.destIP = ""
-        self.destPort = -1
+    def __init__(self, title="BSK: Secure p2p chat", listenerPort=5050, senderPort=5051):
+        # # NETWORK
+        self.networkManager = nm.NetworkManager(self, listenerPort, senderPort)
+        # self.listener = threading.Thread(target=self.listenFunction, daemon=True)
+        # self.listener.start()
+        # self.listenerPort = int(listenerPort)
+        # self.senderPort = int(senderPort)
+        # self.destIP = ""
+        # self.destPort = -1
 
         # KEYS
         self.keyManager = km.KeyManager(self)
@@ -50,7 +51,7 @@ class MainWindow:
 
         self.generateKeysButton = tk.Button(self.frame, text="Generate RSA Keys", padx=10, pady=5,
                                             fg="white", bg=WINDOWS_BG_COLOR,
-                                            command= self.keyManager.generateRSAKeys)
+                                            command=self.keyManager.generateRSAKeys)
 
         self.loadKeysButton = tk.Button(self.frame, text="Load RSA Keys", padx=10, pady=5,
                                         fg="white", bg=WINDOWS_BG_COLOR,
@@ -77,9 +78,7 @@ class MainWindow:
 
     def sendMessage(self):
         msg = self.enterMessageTextBox.get("1.0", tk.END)
-        self.chatTextBox.config(state=tk.NORMAL)
-        self.chatTextBox.insert(tk.INSERT, msg)
-        self.chatTextBox.config(state=tk.DISABLED)
+        self.showMessage(msg)
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("jestesmy w sendMessage")
@@ -101,28 +100,28 @@ class MainWindow:
         self.chatTextBox.delete('1.0', tk.END)
         self.chatTextBox.config(state=tk.DISABLED)
 
-    def listenFunction(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('127.0.0.1', self.listenerPort))
-        sock.listen()
-
-        while True:
-            conn, senderInfo = sock.accept()
-            print("Listener Function")
-            print("conn", conn)
-            print("senderInfo", senderInfo)
-
-            while True:
-                data = conn.recv(1024)
-                if not data:
-                    break
-                msg = data.decode()
-                # print(msg)
-                if self.destPort == -1:
-                    senderAddr, senderPort = senderInfo
-                    print("senderAddr", senderAddr)
-                    print("senderPort", senderPort)
-                    self.destIP = senderAddr
-                    self.destPort = int(msg.split(";")[0])
-                self.showMessage(msg)
-            conn.close()
+    # def listenFunction(self):
+    #     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     sock.bind(('127.0.0.1', self.listenerPort))
+    #     sock.listen()
+    #
+    #     while True:
+    #         conn, senderInfo = sock.accept()
+    #         print("Listener Function")
+    #         print("conn", conn)
+    #         print("senderInfo", senderInfo)
+    #
+    #         while True:
+    #             data = conn.recv(1024)
+    #             if not data:
+    #                 break
+    #             msg = data.decode()
+    #             # print(msg)
+    #             if self.destPort == -1:
+    #                 senderAddr, senderPort = senderInfo
+    #                 print("senderAddr", senderAddr)
+    #                 print("senderPort", senderPort)
+    #                 self.destIP = senderAddr
+    #                 self.destPort = int(msg.split(";")[0])
+    #             self.showMessage(msg)
+    #         conn.close()
