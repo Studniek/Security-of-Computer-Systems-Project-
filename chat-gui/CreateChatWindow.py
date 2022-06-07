@@ -1,3 +1,4 @@
+import json
 import tkinter as tk
 from constants import *
 import socket
@@ -46,12 +47,18 @@ class CreateChatWindow:
 
         self.parent.networkManager.destIP = self.ipEntry.get()
         self.parent.networkManager.destPort = int(self.destPortEntry.get())
-        msg = f'{self.parent.networkManager.listenerPort} ; Polaczenie zostalo utworzone!'
-       
+
+        publicRSAKey = self.parent.keyManager.ownPublicKey.save_pkcs1().decode('utf-8')
+        msg = 'Polaczenie zostalo utworzone'
+        self.parent.showMessage(msg)
+
+        json_data = json.dumps(
+            {'messageType': MessageType.handshake.value, 'destinationPort': self.parent.networkManager.destPort,
+             'message': msg, 'publicRSAKey': publicRSAKey})
+
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
         senderSocket.connect(('127.0.0.1', self.parent.networkManager.destPort))
-        senderSocket.sendall(msg.encode())
+        senderSocket.sendall(json_data.encode())
         senderSocket.close()
 
         self.root.destroy()

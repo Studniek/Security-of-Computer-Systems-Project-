@@ -17,7 +17,7 @@ class KeyManager:
         self.localKeyHash = None  # For encrypting private key
 
         self.otherPublicKey = None
-        self.otherPrivateKey = None
+        self.sessionKey = None
 
     def generateRSAKeys(self, length=256):
         # LOCAL KEY
@@ -44,12 +44,12 @@ class KeyManager:
         print("\n\n\n")
 
         # PUBLIC KEY FILE
-        publicKey_file = open(self.publicKeysPath + "ownPublic.json", 'w')
+        publicKey_file = open(self.publicKeysPath + "ownPublic2.json", 'w')
         publicKey_file.write(encodedPublicKey)
         publicKey_file.close()
 
         # PRIVATE KEY FILE
-        privateKey_file = open(self.privateKeysPath + "ownPrivate.json", 'w')
+        privateKey_file = open(self.privateKeysPath + "ownPrivate2.json", 'w')
         privateKey_file.write(encodedPrivateKey)
         privateKey_file.close()
 
@@ -68,7 +68,7 @@ class KeyManager:
         decodedPublicKey = cbcDecryption(encodedPublicKey, self.localKeyHash)
         publicKey_file.close()
         print("Public Key:")
-        # print(rsa.PublicKey.load_pkcs1(decodedPublicKey))
+        print(rsa.PublicKey.load_pkcs1(decodedPublicKey))
         print(encodedPublicKey)
         print(decodedPublicKey)
 
