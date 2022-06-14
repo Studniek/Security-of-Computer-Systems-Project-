@@ -27,12 +27,6 @@ class NetworkManager:
 
     def sendMessage(self, msg):
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # json_data = json.dumps({'messageType':, 'ciphertext': ct})
-        print("jestesmy w sendMessage")
-        print("send1", self.destIP)
-        print("send2", self.destPort)
-
         sessionKey = get_random_bytes(16)
 
         # Message encryption
@@ -65,13 +59,9 @@ class NetworkManager:
         senderSocket.connect((self.destIP, self.destPort))
 
         sessionKey = get_random_bytes(16)
-        print(filepath)
-        print(sessionKey)
         # sending a file
         filename = filepath.split("/")[-1]
         formatFile = filename.split(".")[-1]
-        print(filename)
-        print(formatFile)
 
         # encryption of the file
         init_data = crypt.readBytes(filepath)
@@ -87,21 +77,18 @@ class NetworkManager:
         crypt.writeBytes(f'encrypted_{filename}', bytes(json_enc_data, 'utf-8'))
 
         encryptedFile = f'encrypted_{filename}'
-        print("encrypted File", encryptedFile)
         filesize = os.path.getsize(encryptedFile)
-        print('filesize', filesize)
         json_data = json.dumps(
             {'messageType': MessageType.sendFile.value,
              'encSessionKey': encSessionKey,
+             'filename': filename,
              'format': formatFile,
              'size': filesize,
              'iv': iv
              })
-        print("json data", json_data)
         senderSocket.send(json_data.encode())
         time.sleep(2)
         bar = tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=SIZE)
-        print("tu mamy przesylanie")
         with open(encryptedFile, "rb") as f:
             while True:
                 data = f.read(SIZE)
@@ -142,10 +129,8 @@ class NetworkManager:
                 data = conn.recv(SIZE)
                 if not data:
                     break
-                # data = data.decode()
                 data = json.loads(data)
                 messageType = data["messageType"]
-                print(data)
 
                 match messageType:
                     case MessageType.handshake.value:
@@ -156,18 +141,16 @@ class NetworkManager:
                         self.destPort = data["destinationPort"]
                         self.parent.showMessage(data["message"])
                         self.parent.keyManager.cipherMode = data["cipherMode"]
-                        # Wymiana kluczy
+                        # keys exchange
                         otherRSAPublicKey = bytes(data["publicRSAKey"], 'utf-8')
                         self.parent.keyManager.otherPublicKey = rsa.PublicKey.load_pkcs1(otherRSAPublicKey)
-                        print(self.parent.keyManager.otherPublicKey)
                         self.sendHandshakeAnswer()
 
                     case MessageType.handshakeAnswer.value:
-                        # Wymiana kluczy
+                        # keys exchange
                         otherRSAPublicKey = bytes(data["publicRSAKey"], 'utf-8')
                         self.parent.keyManager.otherPublicKey = rsa.PublicKey.load_pkcs1(otherRSAPublicKey)
                         self.parent.showMessage(data["message"])
-                        print(self.parent.keyManager.otherPublicKey)
                     case MessageType.casualMessage.value:
                         # Decryption of the sessionKey
                         sessionKey = rsa.decrypt(b64decode(data['encSessionKey']),
@@ -179,7 +162,6 @@ class NetworkManager:
                         if self.parent.keyManager.cipherMode == "CBC":
                             iv = data['iv']
 
-                        print(encMsg)
                         json_input = json.dumps({"ciphertext": encMsg, "iv": iv})
                         msg = self.parent.keyManager.decryptData(json_input, sessionKey)
                         msg = msg.decode(encoding="UTF-8")
@@ -188,12 +170,13 @@ class NetworkManager:
 
                     case MessageType.sendFile.value:
                         messageInfo = data
-                        print(messageInfo)
+                        filename = messageInfo['filename']
                         # Progress BAR
                         bar = tqdm(range(messageInfo['size']), f"Receiving new file", unit="B", unit_scale=True,
                                    unit_divisor=SIZE)
-                        recvFile = f"recv_file_encrypted.{messageInfo['format']}"
-                        with open(recvFile, "wb") as f:
+                        path = os.getcwd()
+                        newFile = path = os.getcwd() + '/savedFiles/' + filename
+                        with open(newFile, "wb") as f:
                             while True:
                                 data = conn.recv(SIZE)
                                 if not data:
@@ -204,9 +187,8 @@ class NetworkManager:
                         sessionKey = rsa.decrypt(b64decode(messageInfo['encSessionKey']),
                                                  self.parent.keyManager.ownPrivateKey)
                         # Decryption of the file
-                        pathToSave = f"E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui/recv_file_encrypted.{messageInfo['format']}"
-                        fileToDecrypt = crypt.readBytes(recvFile)
+                        fileToDecrypt = crypt.readBytes(newFile)
                         dec_data = self.parent.keyManager.decryptData(fileToDecrypt, sessionKey)
-                        crypt.writeBytes(pathToSave, dec_data)
+                        crypt.writeBytes(newFile, dec_data)
 
             conn.close()
