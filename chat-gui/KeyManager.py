@@ -16,10 +16,32 @@ class KeyManager:
         self.ownPrivateKey = None
         self.localKeyHash = None  # For encrypting private key
 
-        self.otherPublicKey = None
-        self.otherPrivateKey = None
+        self.cipherMode = None
 
-    def generateRSAKeys(self, length=256):
+        self.otherPublicKey = None
+        self.sessionKey = None
+
+    def encryptData(self,data, key):
+        if self.cipherMode == "ECB":
+            return ecbEncryption(data, key)
+        elif self.cipherMode == "CBC":
+            return cbcEncryption(data, key)
+        else:
+            print("Bad Cipher Mode")
+            return -1
+
+    def decryptData(self,data, key):
+        if self.cipherMode == "ECB":
+            return ecbDecryption(data, key)
+        elif self.cipherMode == "CBC":
+            return cbcDecryption(data, key)
+        else:
+            print("Bad Cipher Mode")
+            return -1
+
+
+
+    def generateRSAKeys(self, length=2048):
         # LOCAL KEY
         enterLocalKeyWindow = elkw.EnterLocalKeyWindow(self.parent)
         enterLocalKeyWindow.root.wait_window()
@@ -30,26 +52,17 @@ class KeyManager:
         # RSA KEYS CIPHERING
         encodedPublicKey = cbcEncryption(self.ownPublicKey.save_pkcs1(), self.localKeyHash)
         decodedPublicKey = cbcDecryption(encodedPublicKey, self.localKeyHash)
-        print("Public Key:")
-        print(self.ownPublicKey)
-        print(encodedPublicKey)
-        print(decodedPublicKey)
 
         encodedPrivateKey = cbcEncryption(self.ownPrivateKey.save_pkcs1(), self.localKeyHash)
         decodedPrivateKey = cbcDecryption(encodedPrivateKey, self.localKeyHash)
-        print("Private Key:")
-        print(self.ownPrivateKey)
-        print(encodedPrivateKey)
-        print(decodedPrivateKey)
-        print("\n\n\n")
 
         # PUBLIC KEY FILE
-        publicKey_file = open(self.publicKeysPath + "ownPublic.json", 'w')
+        publicKey_file = open(self.publicKeysPath + "ownPublic2.json", 'w')
         publicKey_file.write(encodedPublicKey)
         publicKey_file.close()
 
         # PRIVATE KEY FILE
-        privateKey_file = open(self.privateKeysPath + "ownPrivate.json", 'w')
+        privateKey_file = open(self.privateKeysPath + "ownPrivate2.json", 'w')
         privateKey_file.write(encodedPrivateKey)
         privateKey_file.close()
 
@@ -67,20 +80,12 @@ class KeyManager:
         encodedPublicKey = json.dumps(json.load(publicKey_file))
         decodedPublicKey = cbcDecryption(encodedPublicKey, self.localKeyHash)
         publicKey_file.close()
-        print("Public Key:")
-        # print(rsa.PublicKey.load_pkcs1(decodedPublicKey))
-        print(encodedPublicKey)
-        print(decodedPublicKey)
 
         # PRIVATE KEY
         privateKey_file = open(privateKey_path, 'rb')
         encodedPrivateKey = json.dumps(json.load(privateKey_file))
         decodedPrivateKey = cbcDecryption(encodedPrivateKey, self.localKeyHash)
         privateKey_file.close()
-        print("Private Key:")
-        # print(rsa.PrivateKey.load_pkcs1(decodedPrivateKey))
-        print(encodedPrivateKey)
-        print(decodedPrivateKey)
 
         try:
             decodedPublicKey = rsa.PublicKey.load_pkcs1(decodedPublicKey)
