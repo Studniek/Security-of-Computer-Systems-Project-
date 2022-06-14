@@ -14,6 +14,7 @@ from constants import *
 
 SIZE = 1024
 
+
 class NetworkManager:
     def __init__(self, parent, listenerPort=5050, senderPort=5051):
         self.parent = parent  # Parent is the MainWindow
@@ -35,9 +36,18 @@ class NetworkManager:
         self.parent.showMessage(msg)
         sessionKey = get_random_bytes(16)
 
+        # Message encryption
+        msg = b64decode(msg)
+        encMsg = self.parent.keyManager.encryptData(msg, sessionKey)
+        encMsg = b64encode(encMsg).decode('utf-8')
+
+        # Session key encryption
+        encSessionKey = rsa.encrypt(sessionKey, self.parent.keyManager.otherPublicKey)
+        encSessionKey = b64encode(encSessionKey).decode('utf-8')
+
         json_data = json.dumps(
             {'messageType': MessageType.casualMessage.value,
-             'message': msg,'sessionKey': b64encode(sessionKey).decode('utf-8')
+             'encMessage': encMsg, 'encSessionKey': encSessionKey
              })
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,7 +57,7 @@ class NetworkManager:
 
     def sendFile(self, filepath):
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        senderSocket.connect((self.destIP,self.destPort))
+        senderSocket.connect((self.destIP, self.destPort))
 
         sessionKey = get_random_bytes(16)
         print(filepath)
@@ -61,6 +71,11 @@ class NetworkManager:
         # encryption of the file
         init_data = crypt.readBytes(filepath)
         json_enc_data = self.parent.keyManager.encryptData(init_data, sessionKey)
+
+        # Session key encryption
+        encSessionKey = rsa.encrypt(sessionKey, self.parent.keyManager.otherPublicKey)
+        encSessionKey = b64encode(encSessionKey).decode('utf-8')
+
         crypt.writeBytes(f'encrypted_{filename}', bytes(json_enc_data, 'utf-8'))
 
         encryptedFile = f'encrypted_{filename}'
@@ -69,10 +84,10 @@ class NetworkManager:
         print('filesize', filesize)
         json_data = json.dumps(
             {'messageType': MessageType.sendFile.value,
-            'sessionKey': b64encode(sessionKey).decode('utf-8'),
-            'format': formatFile,
-            'size': filesize,
-            })
+             'encSessionKey': encSessionKey,
+             'format': formatFile,
+             'size': filesize,
+             })
         print("json data", json_data)
         senderSocket.send(json_data.encode())
         time.sleep(2)
@@ -118,7 +133,7 @@ class NetworkManager:
 
                 if not data:
                     break
-                #data = data.decode()
+                # data = data.decode()
                 data = json.loads(data)
                 messageType = data["messageType"]
                 print(data)
@@ -146,11 +161,24 @@ class NetworkManager:
                         print(self.parent.keyManager.otherPublicKey)
                     case MessageType.casualMessage.value:
                         self.parent.showMessage(data["message"])
+
+                        # Decryption of the sessionKey
+                        sessionKey = rsa.decrypt(b64decode(data['encSessionKey']),
+                                                 self.parent.keyManager.ownPrivateKey)
+
+                        # Decryption of the message
+                        encMsg = b64decode(data['encMessage'])
+                        msg = self.parent.keyManager.decryptData(encMsg, sessionKey)
+                        msg = b64encode(msg).decode('utf-8')
+
+                        self.parent.showMessage(msg)
+
                     case MessageType.sendFile.value:
                         messageInfo = data
                         print(messageInfo)
                         # Progress BAR
-                        bar = tqdm(range(messageInfo['size']), f"Receiving new file", unit="B", unit_scale=True, unit_divisor=SIZE)
+                        bar = tqdm(range(messageInfo['size']), f"Receiving new file", unit="B", unit_scale=True,
+                                   unit_divisor=SIZE)
                         recvFile = f"recv_file_encrypted.{messageInfo['format']}"
                         with open(recvFile, "wb") as f:
                             while True:
@@ -159,12 +187,13 @@ class NetworkManager:
                                     break
                                 f.write(data)
                                 bar.update(len(data))
-                        
+                        # Decryption of the sessionKey
+                        sessionKey = rsa.decrypt(b64decode(messageInfo['encSessionKey']),
+                                                 self.parent.keyManager.ownPrivateKey)
                         # Decryption of the file
                         pathToSave = f"E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui/recv_file_encrypted.{messageInfo['format']}"
                         fileToDecrypt = crypt.readBytes(recvFile)
-                        dec_data = self.parent.keyManager.decryptData(fileToDecrypt,b64decode(messageInfo['sessionKey']))
-                        crypt.writeBytes(pathToSave,dec_data)
+                        dec_data = self.parent.keyManager.decryptData(fileToDecrypt, sessionKey)
+                        crypt.writeBytes(pathToSave, dec_data)
 
-
-            conn.close()
+                        conn.close()
