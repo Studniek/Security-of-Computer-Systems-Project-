@@ -12,8 +12,9 @@ class KeyManager:
         self.publicKeysPath = publicKeysPath
         self.privateKeysPath = privateKeysPath
 
-        self.ownPublicKey = None
-        self.ownPrivateKey = None
+        self.ownPublicKey, self.ownPrivateKey = rsa.newkeys(256)
+        #self.ownPublicKey = None
+        #self.ownPrivateKey = None
         self.localKeyHash = None  # For encrypting private key
 
         self.otherPublicKey = None

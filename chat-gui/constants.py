@@ -10,4 +10,4 @@ class MessageType(Enum):
     handshake = 1
     handshakeAnswer = 2
     casualMessage = 3
-    file = 4
+    sendFile = 4

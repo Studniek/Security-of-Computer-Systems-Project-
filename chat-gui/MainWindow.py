@@ -63,10 +63,9 @@ class MainWindow:
         self.root.mainloop()
 
     def addFile(self):
-        filenames = filedialog.askopenfilenames(initialdir="/", title="Select File")
-        for filename in filenames:
-            # LOADING FILES TO MEMORY AND SENDING THEM TO ANOTHER USER HERE...
-            print(filename)
+        filenames = filedialog.askopenfilenames(initialdir="E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui", title="Select File")
+        filepath = filenames[0]
+        self.networkManager.sendFile(filepath)
 
     def sendMessageButtonFunction(self):
         msg = self.enterMessageTextBox.get("1.0", tk.END)
