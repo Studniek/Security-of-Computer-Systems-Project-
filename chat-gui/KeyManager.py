@@ -17,8 +17,30 @@ class KeyManager:
         #self.ownPrivateKey = None
         self.localKeyHash = None  # For encrypting private key
 
+        self.cipherMode = None
+
         self.otherPublicKey = None
         self.sessionKey = None
+
+    def encryptData(self,data, key):
+        if self.cipherMode == "ECB":
+            return ecbEncryption(data, key)
+        elif self.cipherMode == "CBC":
+            return cbcEncryption(data, key)
+        else:
+            print("Bad Cipher Mode")
+            return -1
+
+    def decryptData(self,data, key):
+        if self.cipherMode == "ECB":
+            return ecbDecryption(data, key)
+        elif self.cipherMode == "CBC":
+            return cbcDecryption(data, key)
+        else:
+            print("Bad Cipher Mode")
+            return -1
+
+
 
     def generateRSAKeys(self, length=256):
         # LOCAL KEY

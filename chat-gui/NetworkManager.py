@@ -7,6 +7,8 @@ import rsa
 from tqdm import tqdm
 import os
 import time
+from base64 import b64encode
+from base64 import b64decode
 
 from constants import *
 
@@ -32,9 +34,10 @@ class NetworkManager:
 
         self.parent.showMessage(msg)
         sessionKey = get_random_bytes(16)
+
         json_data = json.dumps(
             {'messageType': MessageType.casualMessage.value,
-             'message': msg,'sessionKey': str(sessionKey)
+             'message': msg,'sessionKey': b64encode(sessionKey).decode('utf-8')
              })
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,7 +60,7 @@ class NetworkManager:
 
         # encryption of the file
         init_data = crypt.readBytes(filepath)
-        json_enc_data = crypt.ecbEncryption(init_data, sessionKey)
+        json_enc_data = self.parent.keyManager.encryptData(init_data, sessionKey)
         crypt.writeBytes(f'encrypted_{filename}', bytes(json_enc_data, 'utf-8'))
 
         encryptedFile = f'encrypted_{filename}'
@@ -66,7 +69,7 @@ class NetworkManager:
         print('filesize', filesize)
         json_data = json.dumps(
             {'messageType': MessageType.sendFile.value,
-            'sessionKey': str(sessionKey),
+            'sessionKey': b64encode(sessionKey).decode('utf-8'),
             'format': formatFile,
             'size': filesize,
             })
@@ -128,6 +131,7 @@ class NetworkManager:
                         self.destIP = senderAddr
                         self.destPort = data["destinationPort"]
                         self.parent.showMessage(data["message"])
+                        self.parent.keyManager.cipherMode = data["cipherMode"]
                         # Wymiana kluczy
                         otherRSAPublicKey = bytes(data["publicRSAKey"], 'utf-8')
                         self.parent.keyManager.otherPublicKey = rsa.PublicKey.load_pkcs1(otherRSAPublicKey)
@@ -156,9 +160,10 @@ class NetworkManager:
                                 f.write(data)
                                 bar.update(len(data))
                         
+                        # Decryption of the file
                         pathToSave = f"E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui/recv_file_encrypted.{messageInfo['format']}"
                         fileToDecrypt = crypt.readBytes(recvFile)
-                        dec_data = crypt.ecbDecryption(fileToDecrypt,bytes(messageInfo['sessionKey'],'utf-8'))
+                        dec_data = self.parent.keyManager.decryptData(fileToDecrypt,b64decode(messageInfo['sessionKey']))
                         crypt.writeBytes(pathToSave,dec_data)
 
 

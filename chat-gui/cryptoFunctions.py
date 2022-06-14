@@ -33,18 +33,16 @@ def ecbEncryption(data, key, view_data=False):
     cipher = AES.new(key, AES.MODE_ECB)
     enc_data = cipher.encrypt(pad(data, AES.block_size))
     ct = b64encode(enc_data).decode('utf-8')
-    key = b64encode(key).decode('utf-8')
-    json_data = json.dumps({'key': key, 'ciphertext': ct})
+    json_data = json.dumps({'ciphertext': ct})
     if view_data:
         print("Encrypted data:\n" + json_data)
     return json_data
 
 
-def ecbDecryption(json_data, view_data=False):
+def ecbDecryption(json_data,key, view_data=False):
     try:
         b64 = json.loads(json_data)
         enc_data = b64decode(b64['ciphertext'])
-        key = b64decode(b64['key'])
         # # Change 1 byte in ciphertext
         # # 1 Block (in which 1 changed byte located) is changed in decrypted data
         # enc_data = bytearray(enc_data)
@@ -64,7 +62,6 @@ def cbcEncryption(data, key):
     ct_bytes = cipher.encrypt(pad(data, AES.block_size))
     iv = b64encode(cipher.iv).decode('utf-8')
     ct = b64encode(ct_bytes).decode('utf-8')
-    key = b64encode(key).decode('utf-8')
     # json_data = json.dumps({'iv': iv, 'key': key, 'ciphertext': ct})
     json_data = json.dumps({'iv': iv, 'ciphertext': ct})
     return json_data
