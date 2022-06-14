@@ -63,21 +63,22 @@ class MainWindow:
         self.root.mainloop()
 
     def addFile(self):
-        filenames = filedialog.askopenfilenames(initialdir="E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui", title="Select File")
+        filenames = filedialog.askopenfilenames(
+            initialdir="E:/Studia/Semestr 6/BSK/Security-of-Computer-Systems-Project-/chat-gui", title="Select File")
         filepath = filenames[0]
         self.networkManager.sendFile(filepath)
 
     def sendMessageButtonFunction(self):
-        msg = self.enterMessageTextBox.get("1.0", tk.END)
+        msg = self.enterMessageTextBox.get("1.0", 'end-1c')
         self.showMessage(msg)
         self.networkManager.sendMessage(msg)
 
     def showMessage(self, msg):
         self.chatTextBox.config(state=tk.NORMAL)
-        self.chatTextBox.insert(tk.INSERT, msg)
+        self.chatTextBox.insert(tk.INSERT, msg+"\n")
         self.chatTextBox.config(state=tk.DISABLED)
 
     def clearChat(self):
         self.chatTextBox.config(state=tk.NORMAL)
-        self.chatTextBox.delete('1.0', tk.END)
+        self.chatTextBox.delete('1.0', 'end-1c')
         self.chatTextBox.config(state=tk.DISABLED)

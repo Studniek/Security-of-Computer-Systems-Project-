@@ -33,13 +33,12 @@ class NetworkManager:
         print("send1", self.destIP)
         print("send2", self.destPort)
 
-        self.parent.showMessage(msg)
         sessionKey = get_random_bytes(16)
 
         # Message encryption
 
         msg = msg.encode(encoding='UTF-8')
-        jsonEnc= self.parent.keyManager.encryptData(msg, sessionKey)
+        jsonEnc = self.parent.keyManager.encryptData(msg, sessionKey)
         json_data = json.loads(jsonEnc)
         encMsg = json_data['ciphertext']
         iv = None
@@ -170,8 +169,6 @@ class NetworkManager:
                         self.parent.showMessage(data["message"])
                         print(self.parent.keyManager.otherPublicKey)
                     case MessageType.casualMessage.value:
-                        self.parent.showMessage(data["message"])
-
                         # Decryption of the sessionKey
                         sessionKey = rsa.decrypt(b64decode(data['encSessionKey']),
                                                  self.parent.keyManager.ownPrivateKey)
@@ -181,9 +178,9 @@ class NetworkManager:
                         iv = None
                         if self.parent.keyManager.cipherMode == "CBC":
                             iv = data['iv']
-                        
+
                         print(encMsg)
-                        json_input = json.dumps({"ciphertext" : encMsg, "iv": iv})
+                        json_input = json.dumps({"ciphertext": encMsg, "iv": iv})
                         msg = self.parent.keyManager.decryptData(json_input, sessionKey)
                         msg = msg.decode(encoding="UTF-8")
 
