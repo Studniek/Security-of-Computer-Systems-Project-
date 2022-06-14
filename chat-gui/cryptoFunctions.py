@@ -40,21 +40,21 @@ def ecbEncryption(data, key, view_data=False):
 
 
 def ecbDecryption(json_data,key, view_data=False):
-    try:
-        b64 = json.loads(json_data)
-        enc_data = b64decode(b64['ciphertext'])
-        # # Change 1 byte in ciphertext
-        # # 1 Block (in which 1 changed byte located) is changed in decrypted data
-        # enc_data = bytearray(enc_data)
-        # enc_data[0] = 123
+    #try:
+    b64 = json.loads(json_data)
+    enc_data = b64decode(b64['ciphertext'])
+    # # Change 1 byte in ciphertext
+    # # 1 Block (in which 1 changed byte located) is changed in decrypted data
+    # enc_data = bytearray(enc_data)
+    # enc_data[0] = 123
 
-        cipher = AES.new(key, AES.MODE_ECB)
-        dec_data = unpad(cipher.decrypt(enc_data), AES.block_size)
-        if view_data:
-            print("Decrypted data: ", str(dec_data))
-        return dec_data
-    except (ValueError, KeyError) as e:
-        print("Incorrect decryption")
+    cipher = AES.new(key, AES.MODE_ECB)
+    dec_data = unpad(cipher.decrypt(enc_data), AES.block_size)
+    if view_data:
+        print("Decrypted data: ", str(dec_data))
+    return dec_data
+    #except (ValueError, KeyError) as e:
+    #    print("Incorrect decryption")
 
 
 def cbcEncryption(data, key):

@@ -37,9 +37,14 @@ class NetworkManager:
         sessionKey = get_random_bytes(16)
 
         # Message encryption
-        msg = b64decode(msg)
-        encMsg = self.parent.keyManager.encryptData(msg, sessionKey)
-        encMsg = b64encode(encMsg).decode('utf-8')
+
+        msg = msg.encode(encoding='UTF-8')
+        jsonEnc= self.parent.keyManager.encryptData(msg, sessionKey)
+        json_data = json.loads(jsonEnc)
+        encMsg = json_data['ciphertext']
+        iv = None
+        if self.parent.keyManager.cipherMode == "CBC":
+            iv = json_data['iv']
 
         # Session key encryption
         encSessionKey = rsa.encrypt(sessionKey, self.parent.keyManager.otherPublicKey)
@@ -47,7 +52,8 @@ class NetworkManager:
 
         json_data = json.dumps(
             {'messageType': MessageType.casualMessage.value,
-             'encMessage': encMsg, 'encSessionKey': encSessionKey
+             'message': encMsg, 'encSessionKey': encSessionKey,
+             'iv': iv
              })
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -71,6 +77,9 @@ class NetworkManager:
         # encryption of the file
         init_data = crypt.readBytes(filepath)
         json_enc_data = self.parent.keyManager.encryptData(init_data, sessionKey)
+        iv = None
+        if self.parent.keyManager.cipherMode == "CBC":
+            iv = json.loads(json_enc_data)['iv']
 
         # Session key encryption
         encSessionKey = rsa.encrypt(sessionKey, self.parent.keyManager.otherPublicKey)
@@ -87,6 +96,7 @@ class NetworkManager:
              'encSessionKey': encSessionKey,
              'format': formatFile,
              'size': filesize,
+             'iv': iv
              })
         print("json data", json_data)
         senderSocket.send(json_data.encode())
@@ -101,6 +111,7 @@ class NetworkManager:
                 senderSocket.send(data)
                 bar.update(len(data))
 
+        os.remove(encryptedFile)
         senderSocket.close()
 
     def sendHandshakeAnswer(self):
@@ -129,8 +140,7 @@ class NetworkManager:
             print("senderInfo", senderInfo)
 
             while True:
-                data = conn.recv(1024)
-
+                data = conn.recv(SIZE)
                 if not data:
                     break
                 # data = data.decode()
@@ -167,9 +177,15 @@ class NetworkManager:
                                                  self.parent.keyManager.ownPrivateKey)
 
                         # Decryption of the message
-                        encMsg = b64decode(data['encMessage'])
-                        msg = self.parent.keyManager.decryptData(encMsg, sessionKey)
-                        msg = b64encode(msg).decode('utf-8')
+                        encMsg = data['message']
+                        iv = None
+                        if self.parent.keyManager.cipherMode == "CBC":
+                            iv = data['iv']
+                        
+                        print(encMsg)
+                        json_input = json.dumps({"ciphertext" : encMsg, "iv": iv})
+                        msg = self.parent.keyManager.decryptData(json_input, sessionKey)
+                        msg = msg.decode(encoding="UTF-8")
 
                         self.parent.showMessage(msg)
 
@@ -196,4 +212,4 @@ class NetworkManager:
                         dec_data = self.parent.keyManager.decryptData(fileToDecrypt, sessionKey)
                         crypt.writeBytes(pathToSave, dec_data)
 
-                        conn.close()
+            conn.close()
