@@ -58,7 +58,7 @@ class CreateChatWindow:
              'message': msg, 'publicRSAKey': publicRSAKey, 'cipherMode': self.parent.keyManager.cipherMode})
 
         senderSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        senderSocket.connect(('127.0.0.1', self.parent.networkManager.destPort))
+        senderSocket.connect((self.parent.networkManager.destIP, self.parent.networkManager.destPort))
         senderSocket.sendall(json_data.encode())
         senderSocket.close()
 
